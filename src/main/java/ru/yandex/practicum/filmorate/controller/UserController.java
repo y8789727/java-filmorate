@@ -22,6 +22,8 @@ import java.util.Map;
 public class UserController {
     private final Map<Integer, User> users = new HashMap<>();
 
+    private int lastId = 0;
+
     @GetMapping
     public Collection<User> getAll() {
         return users.values();
@@ -40,8 +42,8 @@ public class UserController {
     @PutMapping
     public User update(@Valid @RequestBody User user) {
         if (!users.containsKey(user.getId())) {
-            log.debug("Fail to update user: no ID");
-            throw new IllegalArgumentException("Updated user not found!");
+            log.debug("Fail to update user: no ID = {}", user.getId());
+            throw new IllegalArgumentException("User with id = %d not found!".formatted(user.getId()));
         }
 
         validateUser(user);
@@ -52,11 +54,7 @@ public class UserController {
     }
 
     private int getNextId() {
-        int currentMaxId = users.keySet().stream()
-                .mapToInt(i -> i)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+        return ++lastId;
     }
 
     private void validateUser(User user) {

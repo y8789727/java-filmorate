@@ -89,7 +89,7 @@ class FilmControllerTest {
         final Film f = new Film();
         f.setName("Name");
 
-        f.setDescription("t".repeat(250));
+        f.setDescription("t".repeat(FilmController.MAX_DESCRIPTION_LENGTH + 10));
 
         assertThrows(ValidationException.class, () -> fc.create(f));
     }

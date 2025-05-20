@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
+    public static final int MAX_DESCRIPTION_LENGTH = 200;
+    public static final LocalDate EARLIEST_FILM_DATE = LocalDate.of(1895, 12, 28);
+
     private final Map<Integer, Film> films = new HashMap<>();
+
+    private int lastId = 0;
 
     @GetMapping
     public Collection<Film> getAll() {
@@ -40,8 +46,8 @@ public class FilmController {
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
         if (!films.containsKey(film.getId())) {
-            log.debug("Fail to update film: no input ID");
-            throw new IllegalArgumentException("Updated film not found!");
+            log.debug("Fail to update film: no film with ID = {}", film.getId());
+            throw new IllegalArgumentException("Updated film with id = %d not found!".formatted(film.getId()));
         }
 
         validateFilm(film);
@@ -52,11 +58,7 @@ public class FilmController {
     }
 
     private int getNextId() {
-        int currentMaxId = films.keySet().stream()
-                .mapToInt(i -> i)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+        return ++lastId;
     }
 
     private void validateFilm(Film film) {
@@ -70,12 +72,12 @@ public class FilmController {
             sb.append("\nНазвание не может быть пустым");
         }
 
-        if (film.getDescription() != null && film.getDescription().length() > 200) {
-            sb.append("\nМаксимальная длина описания — 200 символов");
+        if (film.getDescription() != null && film.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
+            sb.append("\nМаксимальная длина описания — %d символов".formatted(MAX_DESCRIPTION_LENGTH));
         }
 
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            sb.append("\nДата релиза не может быть раньше 28 декабря 1895 года");
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(EARLIEST_FILM_DATE)) {
+            sb.append("\nДата релиза не может быть раньше %s".formatted(EARLIEST_FILM_DATE.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))));
         }
 
         if (film.getDuration() < 0) {
