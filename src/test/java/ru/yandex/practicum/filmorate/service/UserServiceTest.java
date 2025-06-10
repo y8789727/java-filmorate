@@ -14,12 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UserServiceTest {
+
     private UserService getUserService() {
         UserService us = new UserService();
         us.setUserStorage(new InMemoryUserStorage());
         return us;
     }
-    
+
     @Test
     public void checkCreateUser() {
         User u = new User();
