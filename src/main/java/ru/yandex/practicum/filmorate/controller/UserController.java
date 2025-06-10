@@ -1,89 +1,84 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
-    private final Map<Integer, User> users = new HashMap<>();
 
-    private int lastId = 0;
+    @Setter
+    @Autowired
+    private UserService userService;
 
     @GetMapping
     public Collection<User> getAll() {
-        return users.values();
+        return userService.getAll();
     }
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        validateUser(user);
-
-        user.setId(getNextId());
-        users.put(user.getId(), user);
-        log.debug("User id={} created", user.getId());
-        return user;
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@Valid @RequestBody User user) {
-        if (!users.containsKey(user.getId())) {
-            log.debug("Fail to update user: no ID = {}", user.getId());
-            throw new IllegalArgumentException("User with id = %d not found!".formatted(user.getId()));
-        }
+        return userService.update(user);
+    }
 
-        validateUser(user);
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable int id) {
+        //ToDo тесты
+        return userService.getUserById(id);
+    }
 
-        users.put(user.getId(), user);
-        log.debug("User id={} updated", user.getId());
+    @GetMapping("/{id}/friends")
+    public Set<User> getFriends(@PathVariable int id) {
+        //ToDo тесты
+        return userService.getUserById(id).getFriendsId().stream()
+                .map(u -> userService.getUserById(u))
+                .collect(Collectors.toSet());
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Set<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
+        //ToDo тесты
+        return userService.getMutualFriend(userService.getUserById(id), userService.getUserById(otherId));
+    }
+
+    @PutMapping("{id}/friends/{friendId}")
+    public User addFriend(@PathVariable int id, @PathVariable int friendId) {
+        //ToDo тесты
+        User user = userService.getUserById(id);
+        userService.addFriend(user, userService.getUserById(friendId));
         return user;
     }
 
-    private int getNextId() {
-        return ++lastId;
-    }
-
-    private void validateUser(User user) {
-        if (user == null) {
-            throw new ValidationException("User is not valid: empty data");
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        if (user.getEmail() == null || user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
-            sb.append("\nЭлектронная почта не может быть пустой и должна быть корректна");
-        }
-
-        if (user.getLogin() == null || user.getLogin().isEmpty() || user.getLogin().contains(" ")) {
-            sb.append("\nЛогин не может быть пустым и содержать пробелы");
-        }
-
-        if (user.getName() == null || user.getName().isEmpty()) {
-            user.setName(user.getLogin());
-        }
-
-        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            sb.append("\nДата рождения не может быть в будущем");
-        }
-
-        if (!sb.isEmpty()) {
-            log.debug("User validation failed: {}", sb);
-            throw new ValidationException("User is not valid: " + sb);
-        }
+    @DeleteMapping("{id}/friends/{friendId}")
+    public User removeFriend(@PathVariable int id, @PathVariable int friendId) {
+        //ToDo тесты
+        User user = userService.getUserById(id);
+        userService.removeFriend(user, userService.getUserById(friendId));
+        return user;
     }
 }
 

@@ -1,92 +1,78 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
-    public static final int MAX_DESCRIPTION_LENGTH = 200;
-    public static final LocalDate EARLIEST_FILM_DATE = LocalDate.of(1895, 12, 28);
 
-    private final Map<Integer, Film> films = new HashMap<>();
-
-    private int lastId = 0;
+    @Setter
+    @Autowired
+    private FilmService filmService;
+    @Setter
+    @Autowired
+    private UserService userService;
 
     @GetMapping
     public Collection<Film> getAll() {
-        return films.values();
+        return filmService.getAll();
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        validateFilm(film);
-
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        log.debug("Film id={} created", film.getId());
-        return film;
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        if (!films.containsKey(film.getId())) {
-            log.debug("Fail to update film: no film with ID = {}", film.getId());
-            throw new IllegalArgumentException("Updated film with id = %d not found!".formatted(film.getId()));
-        }
+        return filmService.update(film);
+    }
 
-        validateFilm(film);
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable int id) {
+        //ToDo тесты
+        return filmService.getFilmById(id);
+    }
 
-        films.put(film.getId(), film);
-        log.debug("Film id={} updated", film.getId());
+    @PutMapping("/{id}/like/{userId}")
+    public Film addLike(@PathVariable int id, @PathVariable int userId) {
+        // ToDo тесты
+        final Film film = filmService.getFilmById(id);
+        filmService.addLike(film, userService.getUserById(userId));
         return film;
     }
 
-    private int getNextId() {
-        return ++lastId;
+    @DeleteMapping("/{id}/like/{userId}")
+    public Film removeLike(@PathVariable int id, @PathVariable int userId) {
+        // ToDo тесты
+        final Film film = filmService.getFilmById(id);
+        filmService.removeLike(film, userService.getUserById(userId));
+        return film;
     }
 
-    private void validateFilm(Film film) {
-        if (film == null) {
-            throw new ValidationException("Film is not valid: empty data");
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        if (film.getName() == null || film.getName().isEmpty()) {
-            sb.append("\nНазвание не может быть пустым");
-        }
-
-        if (film.getDescription() != null && film.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
-            sb.append("\nМаксимальная длина описания — %d символов".formatted(MAX_DESCRIPTION_LENGTH));
-        }
-
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(EARLIEST_FILM_DATE)) {
-            sb.append("\nДата релиза не может быть раньше %s".formatted(EARLIEST_FILM_DATE.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))));
-        }
-
-        if (film.getDuration() < 0) {
-            sb.append("\nПродолжительность фильма не может быть отрицательной");
-        }
-
-        if (!sb.isEmpty()) {
-            log.debug("Film validation failed: {}", sb);
-            throw new ValidationException("Film is not valid: " + sb);
-        }
+    @GetMapping("/popular")
+    public Collection<Film> getPopular(@RequestParam(required=false) int count) {
+        // ToDo тесты
+        int topN = count == 0 ? 10 : count;
+        return filmService.getFilmTop(topN);
     }
+
 }
