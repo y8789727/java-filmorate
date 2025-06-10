@@ -48,13 +48,11 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable int id) {
-        //ToDo тесты
         return filmService.getFilmById(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public Film addLike(@PathVariable int id, @PathVariable int userId) {
-        // ToDo тесты
         final Film film = filmService.getFilmById(id);
         filmService.addLike(film, userService.getUserById(userId));
         return film;
@@ -62,15 +60,13 @@ public class FilmController {
 
     @DeleteMapping("/{id}/like/{userId}")
     public Film removeLike(@PathVariable int id, @PathVariable int userId) {
-        // ToDo тесты
         final Film film = filmService.getFilmById(id);
         filmService.removeLike(film, userService.getUserById(userId));
         return film;
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopular(@RequestParam(required=false) int count) {
-        // ToDo тесты
+    public Collection<Film> getPopular(@RequestParam(required = false) int count) {
         int topN = count == 0 ? 10 : count;
         return filmService.getFilmTop(topN);
     }

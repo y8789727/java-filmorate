@@ -47,13 +47,11 @@ public class UserController {
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable int id) {
-        //ToDo тесты
         return userService.getUserById(id);
     }
 
     @GetMapping("/{id}/friends")
     public Set<User> getFriends(@PathVariable int id) {
-        //ToDo тесты
         return userService.getUserById(id).getFriendsId().stream()
                 .map(u -> userService.getUserById(u))
                 .collect(Collectors.toSet());
@@ -61,13 +59,11 @@ public class UserController {
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public Set<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
-        //ToDo тесты
         return userService.getMutualFriend(userService.getUserById(id), userService.getUserById(otherId));
     }
 
     @PutMapping("{id}/friends/{friendId}")
     public User addFriend(@PathVariable int id, @PathVariable int friendId) {
-        //ToDo тесты
         User user = userService.getUserById(id);
         userService.addFriend(user, userService.getUserById(friendId));
         return user;
@@ -75,7 +71,6 @@ public class UserController {
 
     @DeleteMapping("{id}/friends/{friendId}")
     public User removeFriend(@PathVariable int id, @PathVariable int friendId) {
-        //ToDo тесты
         User user = userService.getUserById(id);
         userService.removeFriend(user, userService.getUserById(friendId));
         return user;
