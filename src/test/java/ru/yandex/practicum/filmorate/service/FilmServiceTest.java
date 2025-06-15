@@ -1,30 +1,25 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.service;
 
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.FilmNotFound;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class FilmControllerTest {
-    private FilmController getFilmController() {
-        FilmController fc = new FilmController();
-
-        FilmService fs = new FilmService();
-        fs.setFilmStorage(new InMemoryFilmStorage());
-        fc.setFilmService(fs);
-
+class FilmServiceTest {
+    private FilmService getFilmService() {
+        FilmService fc = new FilmService();
+        fc.setFilmStorage(new InMemoryFilmStorage());
         return fc;
     }
 
@@ -36,7 +31,7 @@ class FilmControllerTest {
         f.setDuration(50);
         f.setReleaseDate(LocalDate.of(1994, 1, 1));
 
-        final FilmController fc = getFilmController();
+        final FilmService fc = getFilmService();
         fc.create(f);
 
         assertTrue(f.getId() != 0, "ID фильма не сформирован");
@@ -51,7 +46,7 @@ class FilmControllerTest {
         Film f1 = new Film();
         f1.setName("Name1");
 
-        final FilmController fc = getFilmController();
+        final FilmService fc = getFilmService();
         fc.create(f1);
 
         Film f2 = new Film();
@@ -67,13 +62,13 @@ class FilmControllerTest {
 
     @Test
     public void whenNullFilmThenExceptionThrown() {
-        final FilmController fc = getFilmController();
+        final FilmService fc = getFilmService();
         assertThrows(ValidationException.class, () -> fc.create(null));
     }
 
     @Test
     public void whenFillNameEmptyThenExceptionThrown() {
-        final FilmController fc = getFilmController();
+        final FilmService fc = getFilmService();
         final Film f = new Film();
         f.setName("");
 
@@ -82,7 +77,7 @@ class FilmControllerTest {
 
     @Test
     public void whenDurationNegativeThenExceptionThrown() {
-        final FilmController fc = getFilmController();
+        final FilmService fc = getFilmService();
         final Film f = new Film();
         f.setName("Name");
         f.setDuration(-500);
@@ -92,7 +87,7 @@ class FilmControllerTest {
 
     @Test
     public void whenNameIsNullThenNameEqualsLogin() {
-        final FilmController fc = getFilmController();
+        final FilmService fc = getFilmService();
         final Film f = new Film();
         f.setName("Name");
         f.setReleaseDate(LocalDate.of(1700,1,1));
@@ -102,7 +97,7 @@ class FilmControllerTest {
 
     @Test
     public void whenDescTooLargeThenNameEqualsLogin() {
-        final FilmController fc = getFilmController();
+        final FilmService fc = getFilmService();
         final Film f = new Film();
         f.setName("Name");
 
@@ -113,80 +108,73 @@ class FilmControllerTest {
 
     @Test
     public void testGetFilmById() {
-        final FilmController fc = getFilmController();
+        final FilmService fs = getFilmService();
         final Film f = new Film();
         f.setName("Name");
-        fc.create(f);
+        fs.create(f);
 
-        Film f2 = fc.getFilmById(f.getId());
+        Film f2 = fs.getFilmById(f.getId());
         assertEquals(f.getId(), f2.getId(), "Некорректный поиск существующего фильма");
 
-        assertThrows(FilmNotFound.class, () -> fc.getFilmById(-99), "Некорректный поиск несуществующего фильма");
+        assertThrows(FilmNotFound.class, () -> fs.getFilmById(-99), "Некорректный поиск несуществующего фильма");
     }
 
     @Test
     public void testAddRemoveLike() {
-        final FilmController fc = getFilmController();
-        UserService us = new UserService();
-        us.setUserStorage(new InMemoryUserStorage());
-        fc.setUserService(us);
+        final FilmService fs = getFilmService();
+        final UserStorage us = new InMemoryUserStorage();
 
         User u = new User();
         u.setLogin("login");
-        u.setEmail("some@mail.com");
         u.setName("Name");
         us.create(u);
 
         Film f = new Film();
         f.setName("Name");
-        fc.create(f);
+        fs.create(f);
 
-        fc.addLike(f.getId(), u.getId());
+        fs.addLike(f, u);
         Integer[] expectedLikes = {u.getId()};
         assertArrayEquals(expectedLikes, f.getLikes().toArray(),"Список лайков некорректен");
 
-        fc.removeLike(f.getId(), u.getId());
+        fs.removeLike(f, u);
         assertEquals(0, f.getLikes().size(), "Неверное количество лайков после удаления");
     }
 
     @Test
     public void testTopNFilms() {
-        final FilmController fc = getFilmController();
-        UserService us = new UserService();
-        us.setUserStorage(new InMemoryUserStorage());
-        fc.setUserService(us);
+        final FilmService fs = getFilmService();
+        final UserStorage us = new InMemoryUserStorage();
 
         User u1 = new User();
         u1.setLogin("login1");
         u1.setName("Name1");
-        u1.setEmail("some1@mail.com");
         us.create(u1);
 
         User u2 = new User();
         u2.setLogin("login2");
         u2.setName("Name2");
-        u2.setEmail("some2@mail.com");
         us.create(u2);
 
         Film f1 = new Film();
         f1.setName("Name1");
-        fc.create(f1);
+        fs.create(f1);
 
         Film f2 = new Film();
         f2.setName("Name2");
-        fc.create(f2);
+        fs.create(f2);
 
         Film f3 = new Film();
         f3.setName("Name3");
-        fc.create(f3);
+        fs.create(f3);
 
-        fc.addLike(f1.getId(), u1.getId());
-        fc.addLike(f1.getId(), u2.getId());
-        fc.addLike(f2.getId(), u1.getId());
-        fc.addLike(f2.getId(), u2.getId());
-        fc.removeLike(f1.getId(), u1.getId());
+        fs.addLike(f1, u1);
+        fs.addLike(f1, u2);
+        fs.addLike(f2, u1);
+        fs.addLike(f2, u2);
+        fs.removeLike(f1, u1);
 
         Film[] expected = {f2, f1, f3};
-        assertArrayEquals(expected, fc.getPopular(5).toArray(),"Список ТОП-фильмов некорректен");
+        assertArrayEquals(expected, fs.getFilmTop(5).toArray(),"Список ТОП-фильмов некорректен");
     }
 }

@@ -1,10 +1,9 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.service;
 
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.UserNotFound;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
@@ -14,13 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class UserControllerTest {
-    private UserController getUserController() {
+class UserServiceTest {
+
+    private UserService getUserService() {
         UserService us = new UserService();
         us.setUserStorage(new InMemoryUserStorage());
-        UserController uc = new UserController();
-        uc.setUserService(us);
-        return uc;
+        return us;
     }
 
     @Test
@@ -29,7 +27,7 @@ class UserControllerTest {
         u.setLogin("test");
         u.setEmail("some@mail.com");
 
-        final UserController uc = getUserController();
+        final UserService uc = getUserService();
         uc.create(u);
 
         assertTrue(u.getId() != 0, "ID пользователя не сформирован");
@@ -46,7 +44,7 @@ class UserControllerTest {
         u1.setEmail("some@mail.com");
         u1.setName("Name1");
 
-        final UserController uc = getUserController();
+        final UserService uc = getUserService();
         uc.create(u1);
 
         User u2 = new User();
@@ -63,13 +61,13 @@ class UserControllerTest {
 
     @Test
     public void whenNullUserThenExceptionThrown() {
-        final UserController uc = getUserController();
+        final UserService uc = getUserService();
         assertThrows(ValidationException.class, () -> uc.create(null));
     }
 
     @Test
     public void whenLoginNullThenExceptionThrown() {
-        final UserController uc = getUserController();
+        final UserService uc = getUserService();
         final User u = new User();
         u.setEmail("some@mail.com");
         u.setName("Name1");
@@ -79,7 +77,7 @@ class UserControllerTest {
 
     @Test
     public void whenBirthDateInFutureThenExceptionThrown() {
-        final UserController uc = getUserController();
+        final UserService uc = getUserService();
         final User u = new User();
         u.setLogin("test2");
         u.setEmail("some@mail.com");
@@ -91,7 +89,7 @@ class UserControllerTest {
 
     @Test
     public void whenNameIsNullThenNameEqualsLogin() {
-        final UserController uc = getUserController();
+        final UserService uc = getUserService();
         final User u = new User();
         u.setLogin("test2");
         u.setEmail("some@mail.com");
@@ -103,76 +101,75 @@ class UserControllerTest {
 
     @Test
     public void testGetUserById() {
-        final UserController uc = getUserController();
+        final UserService us = getUserService();
         final User u = new User();
         u.setLogin("test2");
         u.setEmail("some@mail.com");
-        uc.create(u);
+        us.create(u);
 
-        User u2 = uc.getUserById(u.getId());
+        User u2 = us.getUserById(u.getId());
         assertEquals(u.getId(), u2.getId(), "Некорректный поиск существующего пользователя");
 
-        assertThrows(UserNotFound.class, () -> uc.getUserById(-99), "Некорректный поиск несуществующего пользователя");
+        assertThrows(UserNotFound.class, () -> us.getUserById(-99), "Некорректный поиск несуществующего пользователя");
     }
 
     @Test
     public void testAddRemoveFriend() {
-        final UserController uc = getUserController();
+        final UserService us = getUserService();
 
         final User u1 = new User();
         u1.setLogin("test1");
         u1.setEmail("some1@mail.com");
-        uc.create(u1);
+        us.create(u1);
 
         final User u2 = new User();
         u2.setLogin("test2");
         u2.setEmail("some2@mail.com");
-        uc.create(u2);
+        us.create(u2);
 
-        uc.addFriend(u1.getId(), u2.getId());
+        us.addFriend(u1, u2);
         Integer[] expected1 = {u2.getId()};
         assertArrayEquals(expected1, u1.getFriendsId().toArray(),"Список друзей для 1го пользователя некорректен");
 
         Integer[] expected2 = {u1.getId()};
         assertArrayEquals(expected2, u2.getFriendsId().toArray(),"Список друзей для 2го пользователя некорректен");
 
-        uc.removeFriend(u1.getId(), u2.getId());
+        us.removeFriend(u1, u2);
         assertEquals(0, u1.getFriendsId().size(), "Неверное количество друзей 1го пользователя после удаления");
         assertEquals(0, u2.getFriendsId().size(), "Неверное количество друзей 2го пользователя после удаления");
     }
 
     @Test
     public void testMutualFriends() {
-        final UserController uc = getUserController();
+        final UserService us = getUserService();
 
         final User u1 = new User();
         u1.setLogin("test1");
         u1.setEmail("some1@mail.com");
-        uc.create(u1);
+        us.create(u1);
 
         final User u2 = new User();
         u2.setLogin("test2");
         u2.setEmail("some2@mail.com");
-        uc.create(u2);
+        us.create(u2);
 
         final User u3 = new User();
         u3.setLogin("test3");
         u3.setEmail("some3@mail.com");
-        uc.create(u3);
+        us.create(u3);
 
         final User u4 = new User();
         u4.setLogin("test4");
         u4.setEmail("some4@mail.com");
-        uc.create(u4);
+        us.create(u4);
 
-        uc.addFriend(u1.getId(), u2.getId());
-        uc.addFriend(u1.getId(), u3.getId());
-        uc.addFriend(u4.getId(), u3.getId());
-        uc.addFriend(u4.getId(), u2.getId());
-        uc.addFriend(u4.getId(), u1.getId());
+        us.addFriend(u1, u2);
+        us.addFriend(u1, u3);
+        us.addFriend(u4, u3);
+        us.addFriend(u4, u2);
+        us.addFriend(u4, u1);
 
         User[] expected = {u2, u3};
-        assertArrayEquals(expected, uc.getCommonFriends(u1.getId(), u4.getId()).toArray(),"Список общих друзей некорректен");
+        assertArrayEquals(expected, us.getMutualFriend(u1, u4).toArray(),"Список общих друзей некорректен");
     }
-
 }
