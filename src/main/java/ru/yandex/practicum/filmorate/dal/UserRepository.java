@@ -95,8 +95,7 @@ public class UserRepository extends BaseRepository<User> {
                 u.getEmail(),
                 u.getLogin(),
                 u.getName(),
-                (u.getBirthday() != null ? Date.valueOf(u.getBirthday()): null));
-                //Date.valueOf(u.getBirthday()));
+                (u.getBirthday() != null ? Date.valueOf(u.getBirthday()) : null));
         u.setId(id);
         return u;
     }
@@ -106,7 +105,7 @@ public class UserRepository extends BaseRepository<User> {
                 u.getEmail(),
                 u.getLogin(),
                 u.getName(),
-                (u.getBirthday() != null ? Date.valueOf(u.getBirthday()): null),
+                (u.getBirthday() != null ? Date.valueOf(u.getBirthday()) : null),
                 u.getId());
         return u;
     }
