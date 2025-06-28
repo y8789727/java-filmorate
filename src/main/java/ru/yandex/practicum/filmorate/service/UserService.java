@@ -12,12 +12,8 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.TreeSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -39,8 +35,12 @@ public class UserService {
     }
 
     public User update(User user) {
-        validateUser(user);
+        final Optional<User> userOpt = userStorage.getById(user.getId());
+        if (userOpt.isEmpty()) {
+            throw new UserNotFound("User not found with id " + user.getId());
+        }
 
+        validateUser(user);
         return userStorage.update(user);
     }
 
@@ -82,24 +82,14 @@ public class UserService {
     }
 
     public void addFriend(User user, User friend) {
-        user.getFriendsId().add(friend.getId());
-        friend.getFriendsId().add(user.getId());
+        userStorage.addFriend(user, friend);
     }
 
     public void removeFriend(User user, User friend) {
-        user.getFriendsId().remove(friend.getId());
-        friend.getFriendsId().remove(user.getId());
+        userStorage.removeFriend(user, friend);
     }
 
     public Set<User> getMutualFriend(User user1, User user2) {
-        Set<Integer> mutualFriendsIds = new HashSet<>(user1.getFriendsId());
-        mutualFriendsIds.retainAll(user2.getFriendsId());
-        mutualFriendsIds.remove(user2.getId());
-
-        return mutualFriendsIds.stream()
-                .map(this::getUserById)
-                .collect(Collectors.toCollection(
-                            () -> new TreeSet<>(Comparator.comparingInt(User::getId))
-                ));
+        return userStorage.getMutualFriend(user1, user2);
     }
 }
