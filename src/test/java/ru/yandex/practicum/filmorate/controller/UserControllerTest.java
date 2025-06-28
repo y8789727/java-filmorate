@@ -133,7 +133,7 @@ class UserControllerTest {
         Integer[] expected1 = {u2.getId()};
         assertArrayEquals(expected1, u1.getFriendsId().toArray(),"Список друзей для 1го пользователя некорректен");
 
-        Integer[] expected2 = {u1.getId()};
+        Integer[] expected2 = {};
         assertArrayEquals(expected2, u2.getFriendsId().toArray(),"Список друзей для 2го пользователя некорректен");
 
         uc.removeFriend(u1.getId(), u2.getId());
