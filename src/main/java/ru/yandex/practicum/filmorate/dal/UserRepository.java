@@ -8,8 +8,12 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public class UserRepository extends BaseRepository<User> {
@@ -36,10 +40,6 @@ public class UserRepository extends BaseRepository<User> {
             "WHERE fr.user_id = ? " +
             "ORDER BY fr.friend_id";
 
-//    private static final String INSERT_USER_QUERY =
-//            "INSERT INTO users(email, login, name, birthday) " +
-//            "VALUES (?, ?, ?, ?) " +
-//            "RETURNING user_id";
     private static final String INSERT_USER_QUERY =
             "INSERT INTO users(email, login, name, birthday) " +
             "VALUES (?, ?, ?, ?)";
@@ -57,18 +57,27 @@ public class UserRepository extends BaseRepository<User> {
             "DELETE FROM Friends WHERE user_id = ? AND friend_id = ?";
 
     private static final String MUTUAL_FRIENDS_QUERY =
-            "SELECT u.user_id, u.email, u.login, u.name, u.birthday\n" +
-            "  FROM Users u\n" +
-            "       JOIN Friends f1\n" +
-            "         ON f1.USER_ID = ?\n" +
-            "        AND f1.FRIEND_ID = u.USER_ID\n" +
-//            "        AND f1.CONFIRMED\n" +
-            "       JOIN Friends f2\n" +
-            "         ON f2.USER_ID = ?\n" +
-            "        AND f2.FRIEND_ID = u.USER_ID\n" +
-//            "        AND f2.CONFIRMED\n" +
-            "  WHERE u.user_id NOT IN (?, ?)\n" +
-            "  ORDER BY u.user_id;";
+            """
+                    SELECT u.user_id, u.email, u.login, u.name, u.birthday
+                      FROM Users u
+                           JOIN Friends f1
+                             ON f1.USER_ID = ?
+                            AND f1.FRIEND_ID = u.USER_ID
+                           JOIN Friends f2
+                             ON f2.USER_ID = ?
+                            AND f2.FRIEND_ID = u.USER_ID
+                      WHERE u.user_id NOT IN (?, ?)
+                      ORDER BY u.user_id;""";
+
+    private static final String FIND_ALL_LIKES_FILM_ID_QUERY =
+            "SELECT fl.film_id, u.user_id " +
+            "FROM Film_Likes fl JOIN Users u ON u.user_id = fl.user_id " +
+            "ORDER BY fl.film_id, u.user_id";
+
+    private static final String FIND_FRIENDS_USER_ID_QUERY =
+            "SELECT fr.user_id, fr.friend_id " +
+            "FROM Friends fr " +
+            "ORDER BY fr.user_id, fr.friend_id";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -120,5 +129,38 @@ public class UserRepository extends BaseRepository<User> {
 
     public List<User> findMutualFriends(User u1, User u2) {
         return findMany(MUTUAL_FRIENDS_QUERY, u1.getId(), u2.getId(), u1.getId(), u2.getId());
+    }
+
+    public Map<Integer, Set<Integer>> findAllLikesIndexByFilmId() {
+        final Map<Integer, Set<Integer>> likesByFilmId = new HashMap<>();
+
+        jdbc.query(FIND_ALL_LIKES_FILM_ID_QUERY, (rs, rowNum) -> {
+            int filmId = rs.getInt("film_id");
+            int likedBy = rs.getInt("user_id");
+            if (likesByFilmId.containsKey(filmId)) {
+                likesByFilmId.get(filmId).add(likedBy);
+            } else {
+                likesByFilmId.put(filmId, new HashSet<>(List.of(likedBy)));
+            }
+            return null;
+        });
+        return likesByFilmId;
+    }
+
+    public Map<Integer, Set<Integer>> findAllFriendsIndexByUserId() {
+        final Map<Integer, Set<Integer>> friendsByUserId = new HashMap<>();
+
+        jdbc.query(FIND_FRIENDS_USER_ID_QUERY, (rs, rowNum) -> {
+            int userId = rs.getInt("user_id");
+            int friendId = rs.getInt("friend_id");
+            if (friendsByUserId.containsKey(userId)) {
+                friendsByUserId.get(userId).add(friendId);
+            } else {
+                friendsByUserId.put(userId, new HashSet<>(List.of(friendId)));
+            }
+            return null;
+        });
+
+        return friendsByUserId;
     }
 }

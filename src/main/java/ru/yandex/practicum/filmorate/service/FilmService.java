@@ -18,6 +18,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -80,10 +82,12 @@ public class FilmService {
             }
         }
 
-        if (!film.getGenres().isEmpty()) {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            Set<Integer> genreIds = filmStorage.getAllGenres().stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toSet());
             film.getGenres().forEach(g -> {
-                    Optional<Genre> genreOpt = filmStorage.getGenreById(g.getId());
-                    if (genreOpt.isEmpty()) {
+                    if (!genreIds.contains(g.getId())) {
                         throw new ReferenceObjectNotFound("Invalid genre id=" + g.getId());
                     }
             });

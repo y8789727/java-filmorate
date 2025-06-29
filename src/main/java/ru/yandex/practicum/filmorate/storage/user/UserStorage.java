@@ -3,8 +3,8 @@ package ru.yandex.practicum.filmorate.storage.user;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface UserStorage {
     Collection<User> getAll();
@@ -19,5 +19,5 @@ public interface UserStorage {
 
     void removeFriend(User user, User friend);
 
-    Set<User> getMutualFriend(User user1, User user2);
+    List<User> getMutualFriend(User user1, User user2);
 }

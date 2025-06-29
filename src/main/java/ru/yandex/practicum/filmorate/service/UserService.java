@@ -12,8 +12,8 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -89,7 +89,7 @@ public class UserService {
         userStorage.removeFriend(user, friend);
     }
 
-    public Set<User> getMutualFriend(User user1, User user2) {
+    public List<User> getMutualFriend(User user1, User user2) {
         return userStorage.getMutualFriend(user1, user2);
     }
 }

@@ -15,7 +15,10 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,19 +33,27 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getAll() {
-        return filmRepository.findAll().stream().map(this::fillReferences).toList();
+        List<Film> allFilms = filmRepository.findAll();
+        final Map<Integer, MpaRating> ratingsByFilmId = mpaRatingRepostory.findAllIndexByFilmId();
+        final Map<Integer, Set<Genre>> genresByFilmId = genreRepository.findAllIndexByFilmId();
+        final Map<Integer, Set<Integer>> likesByFilmId = userRepository.findAllLikesIndexByFilmId();
+        allFilms.forEach(f -> {
+            f.setMpaRating(ratingsByFilmId.get(f.getId()));
+            f.setGenres(genresByFilmId.getOrDefault(f.getId(), new HashSet<>()));
+            f.setLikes(likesByFilmId.getOrDefault(f.getId(), new HashSet<>()));
+        });
+
+        return allFilms;
     }
 
     @Override
     public Optional<Film> getById(int filmId) {
-        return filmRepository.findById(filmId).map(this::fillReferences);
-    }
-
-    private Film fillReferences(Film f) {
-        f.setMpaRating(mpaRatingRepostory.findByFilm(f).orElse(null));
-        f.setGenres(new HashSet<>(genreRepository.findByFilm(f)));
-        f.setLikes(userRepository.findByLikedFilm(f).stream().map(User::getId).collect(Collectors.toSet()));
-        return f;
+        return filmRepository.findById(filmId).map(f -> {
+            f.setMpaRating(mpaRatingRepostory.findByFilm(f).orElse(null));
+            f.setGenres(genreRepository.findByFilm(f));
+            f.setLikes(userRepository.findByLikedFilm(f).stream().map(User::getId).collect(Collectors.toSet()));
+            return f;
+        });
     }
 
     @Override
@@ -61,6 +72,9 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void addLike(Film film, User user) {
+        if (film.getLikes() == null) {
+            film.setLikes(new HashSet<>());
+        }
         film.getLikes().add(user.getId());
         filmRepository.insertLike(film, user.getId());
     }
@@ -73,7 +87,16 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getTopN(int topN) {
-        return filmRepository.findTop(topN).stream().map(this::fillReferences).toList();
+        List<Film> topFilms = filmRepository.findTop(topN);
+        final Map<Integer, MpaRating> ratingsByFilmId = mpaRatingRepostory.findAllIndexByFilmId();
+        final Map<Integer, Set<Genre>> genresByFilmId = genreRepository.findAllIndexByFilmId();
+        final Map<Integer, Set<Integer>> likesByFilmId = userRepository.findAllLikesIndexByFilmId();
+        topFilms.forEach(f -> {
+            f.setMpaRating(ratingsByFilmId.get(f.getId()));
+            f.setGenres(genresByFilmId.getOrDefault(f.getId(), new HashSet<>()));
+            f.setLikes(likesByFilmId.getOrDefault(f.getId(), new HashSet<>()));
+        });
+        return topFilms;
     }
 
     @Override

@@ -12,8 +12,10 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -59,6 +61,9 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public void addLike(Film film, User user) {
+        if (film.getLikes() == null) {
+            film.setLikes(new HashSet<>());
+        }
         film.getLikes().add(user.getId());
     }
 
@@ -73,7 +78,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         return getAll().stream()
                 .sorted(compByLikes.reversed())
                 .limit(topN)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override

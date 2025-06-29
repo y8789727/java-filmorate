@@ -8,10 +8,11 @@ import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.HashSet;
 
 @Slf4j
 @Component
@@ -23,17 +24,18 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Collection<User> getAll() {
-        return userRepository.findAll().stream().map(this::setFriendIds).toList();
-    }
-
-    private User setFriendIds(User u) {
-        u.setFriendsId(new HashSet<>(userRepository.findUserFriendIds(u)));
-        return u;
+        final List<User> allUsers = userRepository.findAll();
+        final Map<Integer, Set<Integer>> friendsIndexByUserId = userRepository.findAllFriendsIndexByUserId();
+        allUsers.forEach(u -> u.setFriendsId(friendsIndexByUserId.getOrDefault(u.getId(), new HashSet<>())));
+        return allUsers;
     }
 
     @Override
     public Optional<User> getById(int userId) {
-        return userRepository.findById(userId).map(this::setFriendIds);
+        return userRepository.findById(userId).map(u -> {
+            u.setFriendsId(new HashSet<>(userRepository.findUserFriendIds(u)));
+            return u;
+        });
     }
 
     @Override
@@ -59,7 +61,11 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public Set<User> getMutualFriend(User user1, User user2) {
-        return userRepository.findMutualFriends(user1, user2).stream().map(this::setFriendIds).collect(Collectors.toSet());
+    public List<User> getMutualFriend(User user1, User user2) {
+        final List<User> mutualFriends = userRepository.findMutualFriends(user1, user2);
+        final Map<Integer, Set<Integer>> friendsIndexByUserId = userRepository.findAllFriendsIndexByUserId();
+        mutualFriends.forEach(u -> u.setFriendsId(friendsIndexByUserId.getOrDefault(u.getId(), new HashSet<>())));
+
+        return mutualFriends;
     }
 }

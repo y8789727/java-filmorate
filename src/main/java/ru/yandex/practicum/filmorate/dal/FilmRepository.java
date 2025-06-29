@@ -22,10 +22,6 @@ public class FilmRepository extends BaseRepository<Film> {
             "WHERE f.film_id = ? " +
             "ORDER BY f.film_id";
 
-//    private static final String INSERT_FILM_QUERY =
-//            "INSERT INTO film(name, description, releaseDate, duration, mpa_rating_id) " +
-//            "VALUES(?, ?, ?, ?, ?) " +
-//            "RETURNING film_id";
     private static final String INSERT_FILM_QUERY =
             "INSERT INTO film(name, description, releaseDate, duration, mpa_rating_id) " +
             "VALUES(?, ?, ?, ?, ?)";

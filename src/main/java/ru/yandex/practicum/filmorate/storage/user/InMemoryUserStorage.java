@@ -6,13 +6,12 @@ import ru.yandex.practicum.filmorate.exception.UserNotFound;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -67,15 +66,13 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Set<User> getMutualFriend(User user1, User user2) {
+    public List<User> getMutualFriend(User user1, User user2) {
         Set<Integer> mutualFriendsIds = new HashSet<>(user1.getFriendsId());
         mutualFriendsIds.retainAll(user2.getFriendsId());
         mutualFriendsIds.remove(user2.getId());
 
         return mutualFriendsIds.stream()
                 .map(i -> getById(i).get())
-                .collect(Collectors.toCollection(
-                        () -> new TreeSet<>(Comparator.comparingInt(User::getId))
-                ));
+                .collect(Collectors.toList());
     }
 }
