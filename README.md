@@ -1,2 +1,6 @@
 # java-filmorate
-Template repository for Filmorate project.
+Filmorate project.
+
+DB Schema
+
+![Db schema](/src/main/resources/QuickDBD-Filmorate.png)

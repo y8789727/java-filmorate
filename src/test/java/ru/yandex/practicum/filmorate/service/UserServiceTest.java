@@ -131,7 +131,7 @@ class UserServiceTest {
         Integer[] expected1 = {u2.getId()};
         assertArrayEquals(expected1, u1.getFriendsId().toArray(),"Список друзей для 1го пользователя некорректен");
 
-        Integer[] expected2 = {u1.getId()};
+        Integer[] expected2 = {};
         assertArrayEquals(expected2, u2.getFriendsId().toArray(),"Список друзей для 2го пользователя некорректен");
 
         us.removeFriend(u1, u2);

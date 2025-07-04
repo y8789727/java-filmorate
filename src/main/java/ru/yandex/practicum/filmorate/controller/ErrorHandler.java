@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.exception.FilmNotFound;
+import ru.yandex.practicum.filmorate.exception.ReferenceObjectNotFound;
 import ru.yandex.practicum.filmorate.exception.UserNotFound;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 
@@ -21,7 +22,7 @@ public class ErrorHandler {
         );
     }
 
-    @ExceptionHandler({FilmNotFound.class, UserNotFound.class})
+    @ExceptionHandler({FilmNotFound.class, UserNotFound.class, ReferenceObjectNotFound.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleNotFound(final RuntimeException e) {
         return Map.of(

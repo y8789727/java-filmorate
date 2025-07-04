@@ -7,8 +7,12 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -51,4 +55,24 @@ public class InMemoryUserStorage implements UserStorage {
         return Optional.ofNullable(users.get(userId));
     }
 
+    @Override
+    public void addFriend(User user, User friend) {
+        user.getFriendsId().add(friend.getId());
+    }
+
+    @Override
+    public void removeFriend(User user, User friend) {
+        user.getFriendsId().remove(friend.getId());
+    }
+
+    @Override
+    public List<User> getMutualFriend(User user1, User user2) {
+        Set<Integer> mutualFriendsIds = new HashSet<>(user1.getFriendsId());
+        mutualFriendsIds.retainAll(user2.getFriendsId());
+        mutualFriendsIds.remove(user2.getId());
+
+        return mutualFriendsIds.stream()
+                .map(i -> getById(i).get())
+                .collect(Collectors.toList());
+    }
 }

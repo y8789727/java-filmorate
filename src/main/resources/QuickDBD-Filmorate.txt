@@ -1,0 +1,43 @@
+User
+-
+user_id PK int
+email UNIQUE NULL varchar(50)
+login UNIQUE varchar(50)
+name varchar(200)
+birthday NULL date
+
+Friends
+-
+user_id PK int FK >- User.user_id
+friend_id PK int FK >- User.user_id
+confirmed bool
+
+Film
+-
+film_id PK int
+name varchar(200)
+description text
+releaseDate date
+duration int
+mpa_rating_id int FK >- Mpa_Rating.mpa_rating_id
+
+Film_Likes
+-
+film_id PK int FK >- Film.film_id
+user_id PK int FK >- User.user_id
+
+Genre
+-
+genre_id PK int
+name varchar(100)
+
+Film_Genre
+-
+film_id PK int FK >- Film.film_id
+genre_id PK int FK >- Genre.genre_id
+
+Mpa_Rating
+-
+mpa_rating_id PK int
+rating varchar(50)
+description varchar(200)
